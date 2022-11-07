@@ -385,7 +385,7 @@ class ChangeList(object):
             except FieldDoesNotExist:
                 pass
             else:
-                if hasattr(field, 'rel') and isinstance(field.rel, models.ManyToOneRel):
+                if isinstance(field.rel, models.ManyToOneRel):
                     return True
         return False
 

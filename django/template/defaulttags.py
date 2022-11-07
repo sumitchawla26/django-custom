@@ -20,7 +20,7 @@ from django.template.base import (
 from django.template.defaultfilters import date
 from django.template.smartif import IfParser, Literal
 from django.utils import six, timezone
-from django.utils.deprecation import RemovedInDjango110Warning
+from django.utils.deprecation import RemovedInDjango20Warning
 from django.utils.encoding import force_text, smart_text
 from django.utils.html import format_html
 from django.utils.lorem_ipsum import paragraphs, words
@@ -197,9 +197,9 @@ class ForNode(Node):
                     if num_loopvars != len_item:
                         warnings.warn(
                             "Need {} values to unpack in for loop; got {}. "
-                            "This will raise an exception in Django 1.10."
+                            "This will raise an exception in Django 2.0."
                             .format(num_loopvars, len_item),
-                            RemovedInDjango110Warning)
+                            RemovedInDjango20Warning)
                     try:
                         unpacked_vars = dict(zip(self.loopvars, item))
                     except TypeError:
@@ -481,7 +481,7 @@ class URLNode(Node):
             current_app = context.request.current_app
         except AttributeError:
             # Change the fallback value to None when the deprecation path for
-            # Context.current_app completes in Django 1.10.
+            # Context.current_app completes in Django 2.0.
             current_app = context.current_app
 
         # Try to look up the URL twice: once given the view name, and again
@@ -745,7 +745,7 @@ def do_filter(parser, token):
 @register.tag
 def firstof(parser, token):
     """
-    Outputs the first variable passed that is not False.
+    Outputs the first variable passed that is not False, without escaping.
 
     Outputs nothing if all the passed variables are False.
 
@@ -756,11 +756,11 @@ def firstof(parser, token):
     This is equivalent to::
 
         {% if var1 %}
-            {{ var1 }}
+            {{ var1|safe }}
         {% elif var2 %}
-            {{ var2 }}
+            {{ var2|safe }}
         {% elif var3 %}
-            {{ var3 }}
+            {{ var3|safe }}
         {% endif %}
 
     but obviously much cleaner!
@@ -770,15 +770,11 @@ def firstof(parser, token):
 
         {% firstof var1 var2 var3 "fallback value" %}
 
-    If you want to disable auto-escaping of variables you can use::
+    If you want to escape the output, use a filter tag::
 
-        {% autoescape off %}
-            {% firstof var1 var2 var3 "<strong>fallback value</strong>" %}
-        {% autoescape %}
-
-    Or if only some variables should be escaped, you can use::
-
-        {% firstof var1 var2|safe var3 "<strong>fallback value</strong>"|safe %}
+        {% filter force_escape %}
+            {% firstof var1 var2 var3 "fallback value" %}
+        {% endfilter %}
 
     """
     bits = token.split_contents()[1:]
@@ -824,7 +820,7 @@ def do_for(parser, token):
     than -- the following::
 
         <ul>
-          {% if athlete_list %}
+          {% if althete_list %}
             {% for athlete in athlete_list %}
               <li>{{ athlete.name }}</li>
             {% endfor %}
@@ -1095,7 +1091,7 @@ def ssi(parser, token):
     """
     warnings.warn(
         "The {% ssi %} tag is deprecated. Use the {% include %} tag instead.",
-        RemovedInDjango110Warning,
+        RemovedInDjango20Warning,
     )
 
     bits = token.split_contents()

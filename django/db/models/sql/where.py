@@ -315,9 +315,9 @@ class WhereNode(tree.Node):
 
     @classmethod
     def _contains_aggregate(cls, obj):
-        if isinstance(obj, tree.Node):
-            return any(cls._contains_aggregate(c) for c in obj.children)
-        return obj.contains_aggregate
+        if not isinstance(obj, tree.Node):
+            return getattr(obj.lhs, 'contains_aggregate', False) or getattr(obj.rhs, 'contains_aggregate', False)
+        return any(cls._contains_aggregate(c) for c in obj.children)
 
     @cached_property
     def contains_aggregate(self):
@@ -336,7 +336,6 @@ class EverythingNode(object):
     """
     A node that matches everything.
     """
-    contains_aggregate = False
 
     def as_sql(self, compiler=None, connection=None):
         return '', []
@@ -346,16 +345,11 @@ class NothingNode(object):
     """
     A node that matches nothing.
     """
-    contains_aggregate = False
-
     def as_sql(self, compiler=None, connection=None):
         raise EmptyResultSet
 
 
 class ExtraWhere(object):
-    # The contents are a black box - assume no aggregates are used.
-    contains_aggregate = False
-
     def __init__(self, sqls, params):
         self.sqls = sqls
         self.params = params
@@ -416,10 +410,6 @@ class Constraint(object):
 
 
 class SubqueryConstraint(object):
-    # Even if aggregates would be used in a subquery, the outer query isn't
-    # interested about those.
-    contains_aggregate = False
-
     def __init__(self, alias, columns, targets, query_object):
         self.alias = alias
         self.columns = columns

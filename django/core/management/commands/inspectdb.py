@@ -73,7 +73,6 @@ class Command(BaseCommand):
                 except NotImplementedError:
                     constraints = {}
                 used_column_names = []  # Holds column names used in the table so far
-                column_to_field_name = {}  # Maps column names to names of model fields
                 for row in connection.introspection.get_table_description(cursor, table_name):
                     comment_notes = []  # Holds Field notes, to be displayed in a Python comment.
                     extra_params = OrderedDict()  # Holds Field parameters such as 'db_column'.
@@ -86,7 +85,6 @@ class Command(BaseCommand):
                     comment_notes.extend(notes)
 
                     used_column_names.append(att_name)
-                    column_to_field_name[column_name] = att_name
 
                     # Add primary_key and unique, if necessary.
                     if column_name in indexes:
@@ -143,7 +141,7 @@ class Command(BaseCommand):
                     if comment_notes:
                         field_desc += '  # ' + ' '.join(comment_notes)
                     yield '    %s' % field_desc
-                for meta_line in self.get_meta(table_name, constraints, column_to_field_name):
+                for meta_line in self.get_meta(table_name, constraints):
                     yield meta_line
 
     def normalize_col_name(self, col_name, used_column_names, is_relation):
@@ -240,7 +238,7 @@ class Command(BaseCommand):
 
         return field_type, field_params, field_notes
 
-    def get_meta(self, table_name, constraints, column_to_field_name):
+    def get_meta(self, table_name, constraints):
         """
         Return a sequence comprising the lines of code necessary
         to construct the inner Meta class for the model corresponding
@@ -253,7 +251,7 @@ class Command(BaseCommand):
                 if len(columns) > 1:
                     # we do not want to include the u"" or u'' prefix
                     # so we build the string rather than interpolate the tuple
-                    tup = '(' + ', '.join("'%s'" % column_to_field_name[c] for c in columns) + ')'
+                    tup = '(' + ', '.join("'%s'" % c for c in columns) + ')'
                     unique_together.append(tup)
         meta = ["",
                 "    class Meta:",

@@ -85,13 +85,12 @@ class HttpRequest(object):
             if server_port != ('443' if self.is_secure() else '80'):
                 host = '%s:%s' % (host, server_port)
 
-        # Allow variants of localhost if ALLOWED_HOSTS is empty and DEBUG=True.
-        allowed_hosts = settings.ALLOWED_HOSTS
-        if settings.DEBUG and not allowed_hosts:
-            allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
+        # There is no hostname validation when DEBUG=True
+        if settings.DEBUG:
+            return host
 
         domain, port = split_domain_port(host)
-        if domain and validate_host(domain, allowed_hosts):
+        if domain and validate_host(domain, settings.ALLOWED_HOSTS):
             return host
         else:
             msg = "Invalid HTTP_HOST header: %r." % host
