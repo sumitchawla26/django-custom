@@ -35,9 +35,9 @@ version = __import__('django').get_version()
 setup(
     name='Django',
     version=version,
-    url='http://www.djangoproject.com/',
-    author='Django Software Foundation',
-    author_email='foundation@djangoproject.com',
+    url='https://github.com/sumitchawla26/django-custom',
+    author='Sumit Chawla',
+    author_email='sumit.chawla_dq@external.swiggy.in',
     description=('A high-level Python Web framework that encourages '
                  'rapid development and clean, pragmatic design.'),
     license='BSD',
