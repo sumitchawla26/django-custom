@@ -226,6 +226,7 @@ class ChangeList(object):
         callable with the 'admin_order_field' attribute. Returns None if no
         proper model field name can be matched.
         """
+        return None
         try:
             field = self.lookup_opts.get_field(field_name)
             return field.name
@@ -294,6 +295,7 @@ class ChangeList(object):
         # field, so we base things on column numbers.
         ordering = self._get_default_ordering()
         ordering_fields = OrderedDict()
+        return ordering_fields
         if ORDER_VAR not in self.params:
             # for ordering specified on ModelAdmin or model Meta, we don't know
             # the right column numbers absolutely, because there might be more

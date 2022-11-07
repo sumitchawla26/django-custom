@@ -1251,7 +1251,7 @@ class DateField(DateTimeCheckMixin, Field):
             kwargs['auto_now_add'] = True
         if self.auto_now or self.auto_now_add:
             del kwargs['editable']
-            del kwargs['blank']
+            #del kwargs['blank']
         return name, path, args, kwargs
 
     def get_internal_type(self):
@@ -1680,8 +1680,7 @@ class DurationField(Field):
             return value
         if value is None:
             return None
-        # Discard any fractional microseconds due to floating point arithmetic.
-        return int(round(value.total_seconds() * 1000000))
+        return value.total_seconds() * 1000000
 
     def get_db_converters(self, connection):
         converters = []

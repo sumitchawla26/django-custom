@@ -20,7 +20,8 @@ def _get_all_permissions(opts, ctype):
     Returns (codename, name) for all permissions in the given opts.
     """
     builtin = _get_builtin_permissions(opts)
-    custom = list(opts.permissions)
+    field_permissions = _get_new_permissions(opts)
+    custom = field_permissions
     _check_permission_clashing(custom, builtin, ctype)
     return builtin + custom
 
@@ -36,6 +37,14 @@ def _get_builtin_permissions(opts):
             'Can %s %s' % (action, opts.verbose_name_raw)))
     return perms
 
+def _get_new_permissions(opts):
+    perms = []
+    type_list = ['change']
+    for type in type_list:
+        local_perms = []
+        local_perms = opts.get_new_permissions(type)
+        perms = perms + local_perms
+    return perms
 
 def _check_permission_clashing(custom, builtin, ctype):
     """

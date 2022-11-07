@@ -13,7 +13,7 @@ from django.db.models.fields.proxy import OrderWrt
 from django.db.models.fields.related import ManyToManyField
 from django.utils import six
 from django.utils.datastructures import ImmutableList, OrderedSet
-from django.utils.deprecation import RemovedInDjango110Warning
+from django.utils.deprecation import RemovedInDjango20Warning
 from django.utils.encoding import (
     force_text, python_2_unicode_compatible, smart_text,
 )
@@ -51,7 +51,7 @@ class raise_deprecation(object):
                     fn.__name__,
                     self.suggested_alternative,
                 ),
-                RemovedInDjango110Warning, stacklevel=2
+                RemovedInDjango20Warning, stacklevel=2
             )
             return fn(*args, **kwargs)
         return wrapper
@@ -103,7 +103,7 @@ class Options(object):
         self.unique_together = []
         self.index_together = []
         self.select_on_save = False
-        self.default_permissions = ('add', 'change', 'delete')
+        self.default_permissions = ('add', 'change', 'delete' ,'view')
         self.permissions = []
         self.object_name = None
         self.app_label = app_label
@@ -145,6 +145,7 @@ class Options(object):
         self.apps = apps
 
         self.default_related_name = None
+	self.field_permissions = []
 
     @lru_cache(maxsize=None)
     def _map_model(self, link):
@@ -509,7 +510,7 @@ class Options(object):
         only forward fields will be returned.
 
         The many_to_many argument exists for backwards compatibility reasons;
-        it has been deprecated and will be removed in Django 1.10.
+        it has been deprecated and will be removed in Django 2.0.
         """
         m2m_in_kwargs = many_to_many is not None
         if m2m_in_kwargs:
@@ -518,7 +519,7 @@ class Options(object):
             warnings.warn(
                 "The 'many_to_many' argument on get_field() is deprecated; "
                 "use a filter on field.many_to_many instead.",
-                RemovedInDjango110Warning
+                RemovedInDjango20Warning
             )
 
         try:
@@ -727,9 +728,9 @@ class Options(object):
 
     def get_fields(self, include_parents=True, include_hidden=False):
         """
-        Returns a list of fields associated to the model. By default, includes
-        forward and reverse fields, fields derived from inheritance, but not
-        hidden fields. The returned fields can be changed using the parameters:
+        Returns a list of fields associated to the model. By default will only
+        return forward fields. This can be changed by enabling or disabling
+        field types using the parameters:
 
         - include_parents: include fields derived from inheritance
         - include_hidden:  include fields that have a related_name that
@@ -827,3 +828,14 @@ class Options(object):
         # Store result into cache for later access
         self._get_fields_cache[cache_key] = fields
         return fields
+
+    def get_new_permissions(self, type):
+        print " ---- getting field permissions for a model ----"
+        model_fields = []
+        model_fields = self.get_all_field_names()
+        field_permissions = []
+        for single_field in model_fields:
+            permission_codename = type + "_" + self.model_name + "_" + single_field
+            permission_name = "Can %s %s : %s" %(type, self.model_name, single_field)
+            field_permissions.append((permission_codename, permission_name))
+        return field_permissions

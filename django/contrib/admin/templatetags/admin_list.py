@@ -175,7 +175,7 @@ def result_headers(cl):
 
 def _boolean_icon(field_val):
     icon_url = static('admin/img/icon-%s.gif' %
-                      {True: 'yes', False: 'no', None: 'unknown'}[field_val])
+                      {True: 'yes', False: 'no', None: 'unknown',2:'yes'}[field_val])
     return format_html('<img src="{}" alt="{}" />', icon_url, field_val)
 
 

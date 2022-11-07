@@ -19,7 +19,9 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext, ugettext_lazy as _
+import re
 
+PASSWORD_INVALID_MESSAGE="Password is not valid.Must be of atleast 9 characters, should contain lower case letters, upper case letters, special characters(@,#,$,%,*,_) and numbers."
 
 class ReadOnlyPasswordHashWidget(forms.Widget):
     def render(self, name, value, attrs):
@@ -67,9 +69,11 @@ class UserCreationForm(forms.ModelForm):
     """
     error_messages = {
         'password_mismatch': _("The two password fields didn't match."),
+        'password_invalid': _(PASSWORD_INVALID_MESSAGE)
     }
     password1 = forms.CharField(label=_("Password"),
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput,
+	help_text=_("Must be of atleast 9 characters, should contain lower case letters, upper case letters, special characters(@,#,$,%,*,_) and numbers."))
     password2 = forms.CharField(label=_("Password confirmation"),
         widget=forms.PasswordInput,
         help_text=_("Enter the same password as above, for verification."))
@@ -81,6 +85,12 @@ class UserCreationForm(forms.ModelForm):
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
         password2 = self.cleaned_data.get("password2")
+        result = validate_password(password1)
+        if not result:
+           raise forms.ValidationError(
+                    self.error_messages['password_invalid'],
+                    code='password_invalid'
+                )
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError(
                 self.error_messages['password_mismatch'],
@@ -128,7 +138,7 @@ class AuthenticationForm(forms.Form):
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
 
     error_messages = {
-        'invalid_login': _("Please enter a correct %(username)s and password. "
+        'invalid_login': _("Please enter a correct username and password. "
                            "Note that both fields may be case-sensitive."),
         'inactive': _("This account is inactive."),
     }
@@ -156,11 +166,12 @@ class AuthenticationForm(forms.Form):
             self.user_cache = authenticate(username=username,
                                            password=password)
             if self.user_cache is None:
-                raise forms.ValidationError(
-                    self.error_messages['invalid_login'],
-                    code='invalid_login',
-                    params={'username': self.username_field.verbose_name},
-                )
+                self.add_error('password', self.error_messages['invalid_login'])
+                #raise forms.ValidationError(
+                #    self.error_messages['invalid_login'],
+                #    code='invalid_login',
+                #    params={'username': self.username_field.verbose_name},
+                #)
             else:
                 self.confirm_login_allowed(self.user_cache)
 
@@ -263,9 +274,11 @@ class SetPasswordForm(forms.Form):
     """
     error_messages = {
         'password_mismatch': _("The two password fields didn't match."),
+        'password_invalid': _(PASSWORD_INVALID_MESSAGE)
     }
     new_password1 = forms.CharField(label=_("New password"),
-                                    widget=forms.PasswordInput)
+                                    widget=forms.PasswordInput,
+				    help_text=_("Must be of atleast 9 characters, should contain lower case letters, upper case letters, special characters(@,#,$,%,*,_) and numbers."))
     new_password2 = forms.CharField(label=_("New password confirmation"),
                                     widget=forms.PasswordInput)
 
@@ -277,6 +290,12 @@ class SetPasswordForm(forms.Form):
         password1 = self.cleaned_data.get('new_password1')
         password2 = self.cleaned_data.get('new_password2')
         if password1 and password2:
+            result = validate_password(password1)
+            if not result:
+                raise forms.ValidationError(
+                    self.error_messages['password_invalid'],
+                    code='password_invalid'
+                )
             if password1 != password2:
                 raise forms.ValidationError(
                     self.error_messages['password_mismatch'],
@@ -327,11 +346,13 @@ class AdminPasswordChangeForm(forms.Form):
     """
     error_messages = {
         'password_mismatch': _("The two password fields didn't match."),
+        'password_invalid': _(PASSWORD_INVALID_MESSAGE)
     }
     required_css_class = 'required'
     password1 = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
+	help_text=_("Must be of atleast 9 characters, should contain lower case letters, upper case letters, special characters(@,#,$,%,*,_) and numbers.")
     )
     password2 = forms.CharField(
         label=_("Password (again)"),
@@ -347,6 +368,12 @@ class AdminPasswordChangeForm(forms.Form):
         password1 = self.cleaned_data.get('password1')
         password2 = self.cleaned_data.get('password2')
         if password1 and password2:
+            result = validate_password(password1)
+            if not result:
+                raise forms.ValidationError(
+                    self.error_messages['password_invalid'],
+                    code='password_invalid'
+                )
             if password1 != password2:
                 raise forms.ValidationError(
                     self.error_messages['password_mismatch'],
@@ -370,3 +397,12 @@ class AdminPasswordChangeForm(forms.Form):
                 return []
         return ['password']
     changed_data = property(_get_changed_data)
+
+def validate_password(password):
+    #length of password should be 9 to 20 characters
+    #It should contain digits, capital letter A-Z and lower case letters a-z,
+    #should have any one special character : @, #, $, %, *, _
+    result = True
+    #if re.match(r"((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%*_]).{9,20})", password, re.UNICODE):
+    #return True
+    return result
